@@ -1,0 +1,37 @@
+{
+  "canvas": {"width": 1200, "height": 757},
+  "export_scale": 2,
+  "preview_width": 393,
+  "same_alpha": true,
+  "require_transparent_corners": true,
+  "cards": [
+    {
+      "name": "01 / Porcelain",
+      "image": "exports/01-porcelain.png",
+      "fullbleed": "exports/01-porcelain-fullbleed.png",
+      "crops": [
+        {"label": "Top left corner", "box": [0, 0, 100, 100]},
+        {"label": "Bottom strip", "box": [0, 690, 1200, 757]},
+        {"label": "Issuer mark", "box": [45, 50, 475, 115]}
+      ]
+    },
+    {
+      "name": "02 / Aurum",
+      "image": "exports/02-aurum.png",
+      "fullbleed": "exports/02-aurum-fullbleed.png",
+      "crops": [
+        {"label": "Divider top", "box": [90, 0, 160, 100]},
+        {"label": "Divider bottom", "box": [90, 680, 160, 757]}
+      ]
+    },
+    {
+      "name": "03 / Nightfall",
+      "image": "exports/03-nightfall.png",
+      "fullbleed": "exports/03-nightfall-fullbleed.png",
+      "crops": [
+        {"label": "Figure and wing edge", "box": [610, 20, 1120, 710]},
+        {"label": "Network mark", "box": [50, 525, 210, 690]}
+      ]
+    }
+  ]
+}

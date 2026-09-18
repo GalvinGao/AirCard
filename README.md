@@ -50,6 +50,39 @@
 
 ---
 
+## Design Card Artwork with an Agent
+
+This checkout includes the [card-face-design skill](.agents/skills/card-face-design/SKILL.md)
+for creating several distinct card faces with source research, official assets,
+precise geometry, soft masks, and Figma/export verification. It includes brief,
+art-direction, asset-provenance, and review templates, plus a non-generative
+script/CV workflow.
+
+From an agent session in this checkout, invoke:
+
+```text
+$card-face-design Create three distinct card faces for AirCard using these references.
+```
+
+For an agent without automatic skill discovery, load the linked `SKILL.md` directly.
+To review exported cards, copy and fill in the
+[collection manifest](.agents/skills/card-face-design/templates/collection.json), then run:
+
+```sh
+python3 .agents/skills/card-face-design/scripts/review_cards.py \
+  --manifest /absolute/path/to/collection.json \
+  --out /absolute/path/to/review
+```
+
+The review helper requires Python 3.10+ and Pillow; dependencies are listed in
+[requirements.txt](.agents/skills/card-face-design/requirements.txt). It checks export
+sizes, shared alpha silhouettes, and optional full-bleed opacity, and produces
+phone-size comparisons and unscaled detail crops. Inspect those images before
+choosing the final PNG in AirCard. A passed export check does not verify Wallet
+rendering on the device.
+
+---
+
 ## How to Apply Lockscreen Passcode Themes (.passthm)
 1. Switch to the **Passcode Themes** tab at the top of AirCard.
 2. Drag & drop any `.passthm` file into the app (or click **Choose .passthm File**).

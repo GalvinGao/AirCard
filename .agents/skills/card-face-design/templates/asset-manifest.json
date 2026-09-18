@@ -1,0 +1,18 @@
+{
+  "assets": [
+    {
+      "id": "issuer-logo",
+      "local_file": "assets/issuer-logo.svg",
+      "source_page": "REPLACE_WITH_PRIMARY_SOURCE_PAGE",
+      "asset_url": "REPLACE_WITH_ORIGINAL_ASSET_URL",
+      "creator_or_publisher": "REPLACE_WITH_CREDIT",
+      "format": "SVG",
+      "dimensions_or_viewbox": null,
+      "alpha": true,
+      "colour_profile": "VERIFY_DIGITAL_RGB",
+      "role": "Primary issuer identity",
+      "modifications": [],
+      "notes": "Verify the appropriate optical size and preserve native lettering."
+    }
+  ]
+}
