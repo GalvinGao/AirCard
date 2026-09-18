@@ -16,6 +16,7 @@ import shutil
 import subprocess
 import sys
 import time
+import tempfile
 from pathlib import Path
 
 # Ensure bundled and standard bin paths are in PATH
@@ -42,9 +43,10 @@ from apply_card_skin import (
 TARGET_ASSETS = [
     "cardBackgroundCombined@3x.png",
     "cardBackgroundCombined@2x.png",
+    "cardBackgroundCombined.pdf",
 ]
 
-CACHE_FILES = ["FrontFace", "Preview"]
+CACHE_FILES = ["FrontFace", "PlaceHolder", "Preview"]
 
 CARDS_STORE_PATH = Path.home() / ".aircard_cards.json"
 LEGACY_STORE_PATH = Path.home() / ".lumicards_cards.json"
@@ -272,6 +274,24 @@ def prepare_card_image(input_path: str) -> bytes:
         raise RuntimeError(f"Failed to process image: {e}")
 
 
+def prepare_card_assets(png_bytes: bytes) -> dict[str, bytes]:
+    """Prepare every format before modifying any files on the device."""
+    helper = ROOT / "bin" / "card_pdf"
+    if not helper.is_file():
+        helper = ROOT / "build" / "card_pdf"
+    with tempfile.TemporaryDirectory(prefix="aircard-pdf-") as directory:
+        source = Path(directory) / "card.png"
+        output = Path(directory) / "card.pdf"
+        source.write_bytes(png_bytes)
+        subprocess.run([str(helper), str(source), str(output)], check=True,
+                       capture_output=True, timeout=30)
+        pdf_bytes = output.read_bytes()
+        if not pdf_bytes.startswith(b"%PDF-"):
+            raise ValueError("Artwork converter did not produce a PDF")
+    return {asset: pdf_bytes if asset.endswith(".pdf") else png_bytes
+            for asset in TARGET_ASSETS}
+
+
 def main():
     print("=" * 60)
     print("🎴 AirCard — Apple Wallet Card Skinner (via airlift)")
@@ -349,6 +369,7 @@ def main():
         img_input = input("Drag and drop image file into terminal (or enter path): ").strip()
         try:
             png_bytes = prepare_card_image(img_input)
+            assets = prepare_card_assets(png_bytes)
             print(f"✅ Image optimized for Apple Wallet ({len(png_bytes)} bytes)")
             break
         except Exception as e:
@@ -357,22 +378,29 @@ def main():
     # 5. Flash cards
     print(f"\n[5/5] Flashing skin to selected cards ({len(selected_hashes)})...")
 
+    failed = []
     for idx, h in enumerate(selected_hashes, 1):
         print(f"\n--- [{idx}/{len(selected_hashes)}] Card: {h} ---")
         pkpass_dir = f"/var/mobile/Library/Passes/Cards/{h}.pkpass"
 
         for asset in TARGET_ASSETS:
-            ok = write_file(device["udid"], pkpass_dir, asset, png_bytes)
+            ok = write_file(device["udid"], pkpass_dir, asset, assets[asset])
+            if not ok:
+                failed.append(f"{h}/{asset}")
             status = "OK" if ok else "FAIL"
             print(f"  -> {asset}: {status}")
 
         for ext in [".cache", ".pkcache"]:
             cache_dir = f"/var/mobile/Library/Passes/Cards/{h}{ext}"
             for leaf in CACHE_FILES:
-                write_file(device["udid"], cache_dir, leaf, b"corrupted")
+                if not write_file(device["udid"], cache_dir, leaf, b"corrupted"):
+                    failed.append(f"{h}{ext}/{leaf}")
         print("  -> System cache cleared (.cache & .pkcache)")
 
     print("\n" + "=" * 60)
+    if failed:
+        print("❌ Some writes failed: " + ", ".join(failed))
+        sys.exit(1)
     print("🎉 DONE! All selected cards successfully updated!")
     print("=" * 60)
     print("1. Force close Apple Wallet on your iPhone.")

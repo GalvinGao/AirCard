@@ -1,0 +1,204 @@
+// !$*UTF8*$!
+{
+	"archiveVersion" = "1";
+	"classes" = {
+	};
+	"objectVersion" = "56";
+	"objects" = {
+		"000000000000000000000001" = {
+			"isa" = "PBXFileReference";
+			"lastKnownFileType" = "sourcecode.swift";
+			"path" = "AirCardApp.swift";
+			"sourceTree" = "<group>";
+		};
+		"000000000000000000000002" = {
+			"fileRef" = "000000000000000000000001";
+			"isa" = "PBXBuildFile";
+		};
+		"000000000000000000000003" = {
+			"isa" = "PBXFileReference";
+			"lastKnownFileType" = "text.script.python";
+			"path" = "aircard.py";
+			"sourceTree" = "<group>";
+		};
+		"000000000000000000000004" = {
+			"fileRef" = "000000000000000000000003";
+			"isa" = "PBXBuildFile";
+		};
+		"000000000000000000000005" = {
+			"isa" = "PBXFileReference";
+			"lastKnownFileType" = "text.script.python";
+			"path" = "aircard_backend.py";
+			"sourceTree" = "<group>";
+		};
+		"000000000000000000000006" = {
+			"fileRef" = "000000000000000000000005";
+			"isa" = "PBXBuildFile";
+		};
+		"000000000000000000000007" = {
+			"isa" = "PBXFileReference";
+			"lastKnownFileType" = "text.script.python";
+			"path" = "apply_card_skin.py";
+			"sourceTree" = "<group>";
+		};
+		"000000000000000000000008" = {
+			"fileRef" = "000000000000000000000007";
+			"isa" = "PBXBuildFile";
+		};
+		"000000000000000000000009" = {
+			"isa" = "PBXFileReference";
+			"lastKnownFileType" = "image.icns";
+			"path" = "dmg_assets/AppIcon.icns";
+			"sourceTree" = "<group>";
+		};
+		"00000000000000000000000A" = {
+			"fileRef" = "000000000000000000000009";
+			"isa" = "PBXBuildFile";
+		};
+		"00000000000000000000000B" = {
+			"explicitFileType" = "wrapper.application";
+			"isa" = "PBXFileReference";
+			"path" = "AirCard.app";
+			"sourceTree" = "BUILT_PRODUCTS_DIR";
+		};
+		"00000000000000000000000C" = {
+			"children" = ("00000000000000000000000B");
+			"isa" = "PBXGroup";
+			"name" = "Products";
+			"sourceTree" = "<group>";
+		};
+		"00000000000000000000000D" = {
+			"children" = ("000000000000000000000001","000000000000000000000003","000000000000000000000005","000000000000000000000007","000000000000000000000009","00000000000000000000000C");
+			"isa" = "PBXGroup";
+			"sourceTree" = "<group>";
+		};
+		"00000000000000000000000E" = {
+			"buildActionMask" = "2147483647";
+			"files" = ("000000000000000000000002");
+			"isa" = "PBXSourcesBuildPhase";
+			"runOnlyForDeploymentPostprocessing" = "0";
+		};
+		"00000000000000000000000F" = {
+			"buildActionMask" = "2147483647";
+			"files" = ("000000000000000000000004","000000000000000000000006","000000000000000000000008","00000000000000000000000A");
+			"isa" = "PBXResourcesBuildPhase";
+			"runOnlyForDeploymentPostprocessing" = "0";
+		};
+		"000000000000000000000010" = {
+			"alwaysOutOfDate" = "1";
+			"buildActionMask" = "2147483647";
+			"files" = ();
+			"inputPaths" = ();
+			"isa" = "PBXShellScriptBuildPhase";
+			"name" = "Bundle device tools";
+			"outputPaths" = ();
+			"runOnlyForDeploymentPostprocessing" = "0";
+			"shellPath" = "/bin/bash";
+			"shellScript" = "bash \"$SRCROOT/scripts/bundle-tools.sh\"";
+		};
+		"000000000000000000000011" = {
+			"buildSettings" = {
+				"CODE_SIGN_IDENTITY" = "Apple Development";
+				"CODE_SIGN_STYLE" = "Automatic";
+				"COMBINE_HIDPI_IMAGES" = "YES";
+				"CURRENT_PROJECT_VERSION" = "4";
+				"DEVELOPMENT_TEAM" = "F25GFFJL49";
+				"ENABLE_APP_SANDBOX" = "NO";
+				"ENABLE_USER_SCRIPT_SANDBOXING" = "NO";
+				"GENERATE_INFOPLIST_FILE" = "YES";
+				"INFOPLIST_KEY_CFBundleIconFile" = "AppIcon";
+				"INFOPLIST_KEY_NSHighResolutionCapable" = "YES";
+				"MACOSX_DEPLOYMENT_TARGET" = "14.0";
+				"MARKETING_VERSION" = "1.2.1";
+				"PRODUCT_BUNDLE_IDENTIFIER" = "llc.mikunet.AirCard";
+				"PRODUCT_NAME" = "$(TARGET_NAME)";
+				"SDKROOT" = "macosx";
+				"SWIFT_EMIT_LOC_STRINGS" = "NO";
+				"SWIFT_OPTIMIZATION_LEVEL" = "-Onone";
+				"SWIFT_VERSION" = "5.0";
+				"ALWAYS_SEARCH_USER_PATHS" = "NO";
+			};
+			"isa" = "XCBuildConfiguration";
+			"name" = "Debug";
+		};
+		"000000000000000000000012" = {
+			"buildSettings" = {
+				"CODE_SIGN_IDENTITY" = "Apple Development";
+				"CODE_SIGN_STYLE" = "Automatic";
+				"COMBINE_HIDPI_IMAGES" = "YES";
+				"CURRENT_PROJECT_VERSION" = "4";
+				"DEVELOPMENT_TEAM" = "F25GFFJL49";
+				"ENABLE_APP_SANDBOX" = "NO";
+				"ENABLE_USER_SCRIPT_SANDBOXING" = "NO";
+				"GENERATE_INFOPLIST_FILE" = "YES";
+				"INFOPLIST_KEY_CFBundleIconFile" = "AppIcon";
+				"INFOPLIST_KEY_NSHighResolutionCapable" = "YES";
+				"MACOSX_DEPLOYMENT_TARGET" = "14.0";
+				"MARKETING_VERSION" = "1.2.1";
+				"PRODUCT_BUNDLE_IDENTIFIER" = "llc.mikunet.AirCard";
+				"PRODUCT_NAME" = "$(TARGET_NAME)";
+				"SDKROOT" = "macosx";
+				"SWIFT_EMIT_LOC_STRINGS" = "NO";
+				"SWIFT_OPTIMIZATION_LEVEL" = "-O";
+				"SWIFT_VERSION" = "5.0";
+				"ALWAYS_SEARCH_USER_PATHS" = "NO";
+			};
+			"isa" = "XCBuildConfiguration";
+			"name" = "Release";
+		};
+		"000000000000000000000013" = {
+			"buildConfigurations" = ("000000000000000000000011","000000000000000000000012");
+			"defaultConfigurationIsVisible" = "0";
+			"defaultConfigurationName" = "Release";
+			"isa" = "XCConfigurationList";
+		};
+		"000000000000000000000014" = {
+			"buildConfigurationList" = "000000000000000000000013";
+			"buildPhases" = ("00000000000000000000000E","00000000000000000000000F","000000000000000000000010");
+			"buildRules" = ();
+			"dependencies" = ();
+			"isa" = "PBXNativeTarget";
+			"name" = "AirCard";
+			"productName" = "AirCard";
+			"productReference" = "00000000000000000000000B";
+			"productType" = "com.apple.product-type.application";
+		};
+		"000000000000000000000015" = {
+			"buildSettings" = {
+				"ALWAYS_SEARCH_USER_PATHS" = "NO";
+			};
+			"isa" = "XCBuildConfiguration";
+			"name" = "Debug";
+		};
+		"000000000000000000000016" = {
+			"buildSettings" = {
+				"ALWAYS_SEARCH_USER_PATHS" = "NO";
+			};
+			"isa" = "XCBuildConfiguration";
+			"name" = "Release";
+		};
+		"000000000000000000000017" = {
+			"buildConfigurations" = ("000000000000000000000015","000000000000000000000016");
+			"defaultConfigurationIsVisible" = "0";
+			"defaultConfigurationName" = "Release";
+			"isa" = "XCConfigurationList";
+		};
+		"000000000000000000000018" = {
+			"attributes" = {
+				"LastUpgradeCheck" = "2660";
+			};
+			"buildConfigurationList" = "000000000000000000000017";
+			"compatibilityVersion" = "Xcode 14.0";
+			"developmentRegion" = "en";
+			"hasScannedForEncodings" = "0";
+			"isa" = "PBXProject";
+			"knownRegions" = ("en","Base");
+			"mainGroup" = "00000000000000000000000D";
+			"productRefGroup" = "00000000000000000000000C";
+			"projectDirPath" = "";
+			"projectRoot" = "";
+			"targets" = ("000000000000000000000014");
+		};
+	};
+	"rootObject" = "000000000000000000000018";
+}

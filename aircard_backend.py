@@ -50,6 +50,7 @@ from aircard import (
     load_saved_cards,
     save_cards,
     TARGET_ASSETS,
+    prepare_card_assets,
     CACHE_FILES,
 )
 
@@ -120,10 +121,15 @@ def cmd_prepare_image(src: str, dst: str):
 def cmd_flash(udid: str, card_hash: str, image_path: str):
     img_path = Path(image_path)
     if not img_path.is_file():
-        print(json.dumps({"ok": False, "error": "Image file not found"}))
-        return
+        print(json.dumps({"type": "error", "message": "Image file not found"}))
+        return False
 
-    payload = img_path.read_bytes()
+    try:
+        assets = prepare_card_assets(img_path.read_bytes())
+    except Exception as exc:
+        print(json.dumps({"type": "error", "message": f"Could not prepare artwork: {exc}"}), flush=True)
+        return False
+    failed = []
     pkpass_dir = f"/var/mobile/Library/Passes/Cards/{card_hash}.pkpass"
     
     total_steps = len(TARGET_ASSETS) + (len(CACHE_FILES) * 2) + 1
@@ -140,8 +146,9 @@ def cmd_flash(udid: str, card_hash: str, image_path: str):
             "message": f"Writing {asset}..."
         }))
         sys.stdout.flush()
-        ok = write_file(udid, pkpass_dir, asset, payload)
+        ok = write_file(udid, pkpass_dir, asset, assets[asset])
         if not ok:
+            failed.append(asset)
             print(json.dumps({
                 "type": "error",
                 "card": card_hash,
@@ -163,7 +170,12 @@ def cmd_flash(udid: str, card_hash: str, image_path: str):
                 "message": f"Invalidating cache ({leaf} in {ext})..."
             }))
             sys.stdout.flush()
-            write_file(udid, cache_dir, leaf, b"corrupted")
+            if not write_file(udid, cache_dir, leaf, b"corrupted"):
+                failed.append(f"{ext}/{leaf}")
+
+    if failed:
+        print(json.dumps({"type": "error", "message": "Failed to update: " + ", ".join(failed)}), flush=True)
+        return False
 
     step += 1
     print(json.dumps({
@@ -174,6 +186,8 @@ def cmd_flash(udid: str, card_hash: str, image_path: str):
         "message": f"Successfully updated {card_hash[:12]}..."
     }))
     sys.stdout.flush()
+
+    return True
 
 
 KEYPAD_SUBTEXTS = {
@@ -358,7 +372,7 @@ def main():
     elif norm_cmd == "prepare-image" and len(sys.argv) > 3:
         cmd_prepare_image(sys.argv[2], sys.argv[3])
     elif norm_cmd == "flash" and len(sys.argv) > 4:
-        cmd_flash(sys.argv[2], sys.argv[3], sys.argv[4])
+        sys.exit(0 if cmd_flash(sys.argv[2], sys.argv[3], sys.argv[4]) else 1)
     elif norm_cmd == "inspect-passthm" and len(sys.argv) > 2:
         cmd_inspect_passthm(sys.argv[2])
     elif norm_cmd == "flash-passthm" and len(sys.argv) > 3:

@@ -6,7 +6,7 @@ AIRTRAFFIC := /System/Library/PrivateFrameworks/AirTrafficHost.framework/AirTraf
 
 .PHONY: all clean
 
-all: build/device_helper build/airtraffic_host
+all: build/device_helper build/airtraffic_host build/card_pdf
 
 build:
 	mkdir -p $@
@@ -21,3 +21,9 @@ build/airtraffic_host: Sources/airtraffic_host.m | build
 
 clean:
 	rm -rf build
+
+build/card_pdf: Sources/card_pdf.swift | build
+	xcrun swiftc -O -target arm64-apple-macosx14.0 $< -o build/card_pdf_arm64
+	xcrun swiftc -O -target x86_64-apple-macosx14.0 $< -o build/card_pdf_x86_64
+	lipo -create build/card_pdf_arm64 build/card_pdf_x86_64 -output $@
+	codesign --force --sign - $@

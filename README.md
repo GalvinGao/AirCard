@@ -65,6 +65,33 @@
 
 ## Building from Source
 
+### Xcode (macOS 14+)
+
+Open `AirCard.xcodeproj`, select the **AirCard** scheme and **My Mac**, then build.
+The project is configured for the MikuNet LLC team (`F25GFFJL49`); choose your own
+team in Signing & Capabilities when building elsewhere.
+
+The build compiles the device helpers and native PDF converter, and bundles the
+Python backend. It copies the libimobiledevice tools and libraries from an installed
+`/Applications/AirCard.app`. To use another release, set the build setting
+`AIRCARD_DEPENDENCIES` to that app's `Contents/Resources` directory. Python 3 must
+be available on the Mac (Xcode's command-line tools provide it).
+
+```sh
+xcodebuild -project AirCard.xcodeproj -scheme AirCard -configuration Release \
+  -derivedDataPath build/Xcode -destination 'platform=macOS' build
+```
+
+Output: `build/Xcode/Build/Products/Release/AirCard.app`.
+This produces a development-signed build, not a notarized distribution release.
+
+Artwork flashing writes both PNG variants and a real `cardBackgroundCombined.pdf`
+for PDF-backed cards such as Suica, and invalidates FrontFace, PlaceHolder, and
+Preview caches. A failed write is reported as a failure. Actual Wallet rendering
+still needs verification on a connected device.
+
+### Shell build
+
 ```sh
 git clone https://github.com/mak5er/AirCard.git
 cd AirCard

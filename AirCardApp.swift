@@ -897,6 +897,15 @@ class AppViewModel: ObservableObject {
                     await handleJSONLine(finalLine)
                 }
                 flashProcess.waitUntilExit()
+                if flashProcess.terminationStatus != 0 {
+                    await MainActor.run {
+                        self.isFlashing = false
+                        self.statusText = "Skin application failed. See logs for details."
+                        self.errorMessage = self.statusText
+                        self.showSuccessAlert = false
+                    }
+                    return
+                }
                 
                 await MainActor.run {
                     self.progress = Double(idx + 1) / totalCards

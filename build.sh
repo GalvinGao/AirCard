@@ -65,6 +65,7 @@ fi
 # Copy universal device_helper and airtraffic_host
 cp build/device_helper "$BIN_DIR/"
 cp build/airtraffic_host "$BIN_DIR/"
+cp build/card_pdf "$BIN_DIR/"
 
 # Copy universal libimobiledevice stack
 SRC_AIRLIFT="/Users/mak5er/Dev/IOS/airlift/build/LumiCards.app/Contents/Resources"
