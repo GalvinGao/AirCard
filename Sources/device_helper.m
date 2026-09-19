@@ -834,10 +834,10 @@ static NSDictionary *FinishWrite(DeviceSession *session, NSArray<NSString *> *ar
     NSString *snapshotRoot = args[3];
     NSMutableArray<NSString *> *failures = NSMutableArray.array;
 
+    if (AFCExists(session->afc, recovered))
+        return @{ @"ok": @NO, @"error": @"Recovered original retained; restore it before cleanup" };
     if (!RemoveIfPresent(session->afc, linkDestination))
         [failures addObject:@"relocated link"];
-    if (!RemoveIfPresent(session->afc, recovered))
-        [failures addObject:@"recovered file"];
     if (!RemoveGeneratedTree(session->afc, source, 0))
         [failures addObject:@"StreamingZip tree"];
     sleep(2);
@@ -857,6 +857,92 @@ static NSDictionary *FinishWrite(DeviceSession *session, NSArray<NSString *> *ar
               @"recoveredAbsent": @(recoveredAbsent),
               @"booksPreimageRestored": @(booksRestored),
               @"booksRestore": booksRestore };
+}
+
+static NSArray<NSString *> *CardArtworkNames(void) {
+    return @[@"cardBackgroundCombined@3x.png", @"cardBackgroundCombined@2x.png",
+             @"cardBackgroundCombined.pdf"];
+}
+
+// Only an explicit not-found response establishes staging-file absence.
+static NSDictionary *RecoveredState(AFCConnectionRef afc, NSString *recovered) {
+    if (!GeneratedToken(recovered, AIRLIFT_RECOVERED_PREFIX)) return @{ @"ok": @NO };
+    AFCKeyValueRef info = NULL;
+    int status = AFCFileInfoOpen(afc, recovered.fileSystemRepresentation, &info);
+    if (info) AFCKeyValueClose(info);
+    // AFC_E_OBJECT_NOT_FOUND is the only status which establishes absence.
+    if (status == 8) return @{ @"ok": @YES, @"present": @NO };
+    if (status != 0) return @{ @"ok": @NO, @"status": @(status) };
+    return @{ @"ok": @YES, @"present": @YES };
+}
+
+static NSDictionary *ReadRecovered(AFCConnectionRef afc, NSString *recovered, NSString *output) {
+    NSDictionary *state = RecoveredState(afc, recovered);
+    if (![state[@"ok"] boolValue] || ![state[@"present"] boolValue]) return state;
+    if (![AFCFileKind(afc, recovered) isEqual:@"S_IFREG"])
+        return @{ @"ok": @NO, @"error": @"Recovered artwork is not a regular file" };
+    NSData *data = AFCReadFileWithLimit(afc, recovered, 128 * 1024 * 1024);
+    if (!data || ![data writeToFile:output options:NSDataWritingAtomic error:nil] ||
+        ![data isEqualToData:[NSData dataWithContentsOfFile:output]])
+        return @{ @"ok": @NO, @"error": @"Could not persist recovered artwork" };
+    return @{ @"ok": @YES, @"present": @YES, @"size": @(data.length) };
+}
+
+static NSDictionary *BackupMetadata(AFCConnectionRef afc, NSString *input) {
+    NSData *data = [NSData dataWithContentsOfFile:input];
+    if (!data) return @{ @"ok": @NO };
+    BOOL written = AFCWriteFile(afc, @"Books/Sync/Books.plist", data);
+    return @{ @"ok": @(written && [data isEqualToData:AFCReadFile(afc, @"Books/Sync/Books.plist")]) };
+}
+
+static NSDictionary *SnapshotCard(AFCConnectionRef afc, NSString *link, NSString *output) {
+    if (!GeneratedToken(link, AIRLIFT_LINK_PREFIX)) return @{ @"ok": @NO };
+    AFCDirectoryRef directory = NULL;
+    int status = AFCDirectoryOpen(afc, link.fileSystemRepresentation, &directory);
+    if (status != 0 || !directory)
+        return @{ @"ok": @NO, @"error": @"Device denied artwork directory access; originals were not moved", @"status": @(status) };
+    NSMutableSet *names = NSMutableSet.set;
+    BOOL complete = NO;
+    for (NSUInteger i = 0; i < 8192; i++) {
+        char *raw = NULL;
+        status = AFCDirectoryRead(afc, directory, &raw);
+        if (status != 0) break;
+        if (!raw) { complete = YES; break; }
+        NSString *name = [NSString stringWithUTF8String:raw];
+        if (!name) break;
+        [names addObject:name];
+    }
+    int closeStatus = AFCDirectoryClose(afc, directory);
+    if (!complete || closeStatus != 0) return @{ @"ok": @NO, @"error": @"Incomplete artwork directory listing" };
+    NSMutableDictionary *files = NSMutableDictionary.dictionary;
+    for (NSString *name in CardArtworkNames()) {
+        if (![names containsObject:name]) {
+            files[name] = @{ @"present": @NO };
+            continue;
+        }
+        NSString *remote = [link stringByAppendingPathComponent:name];
+        if (![AFCFileKind(afc, remote) isEqual:@"S_IFREG"])
+            return @{ @"ok": @NO, @"error": @"Artwork is not a regular file" };
+        NSData *data = AFCReadFileWithLimit(afc, remote, 128 * 1024 * 1024);
+        NSString *local = [output stringByAppendingPathComponent:name];
+        if (!data || ![data writeToFile:local options:NSDataWritingAtomic error:nil])
+            return @{ @"ok": @NO, @"error": @"Could not save artwork backup" };
+        // Verify local persistence and that the live file stayed unchanged.
+        if (![data isEqualToData:[NSData dataWithContentsOfFile:local]] ||
+            ![data isEqualToData:AFCReadFileWithLimit(afc, remote, 128 * 1024 * 1024)])
+            return @{ @"ok": @NO, @"error": @"Artwork changed during backup" };
+        files[name] = @{ @"present": @YES, @"size": @(data.length) };
+    }
+    return @{ @"ok": @YES, @"files": files };
+}
+
+static NSDictionary *RemoveCardArtwork(AFCConnectionRef afc, NSString *link, NSString *leaf) {
+    if (!GeneratedToken(link, AIRLIFT_LINK_PREFIX) || ![CardArtworkNames() containsObject:leaf])
+        return @{ @"ok": @NO };
+    NSString *path = [link stringByAppendingPathComponent:leaf];
+    // A failed stat must never be treated as successful removal.
+    int status = AFCRemovePath(afc, path.fileSystemRepresentation);
+    return @{ @"ok": @(status == 0), @"status": @(status) };
 }
 
 int main(int argc, const char *argv[]) {
@@ -885,6 +971,21 @@ int main(int argc, const char *argv[]) {
                         @([presentPaths containsObject:@"Books/Sync/Books.plist"]),
                     @"booksSyncPlistPresent":
                         @(AFCExists(session.afc, @"Books/Sync/Books.plist")) };
+            } else if ([command isEqual:@"backup-metadata"] && argc == 4) {
+                operation = BackupMetadata(session.afc, [NSString stringWithUTF8String:argv[3]]);
+            } else if ([command isEqual:@"recovered-state"] && argc == 4) {
+                operation = RecoveredState(session.afc, [NSString stringWithUTF8String:argv[3]]);
+            } else if ([command isEqual:@"read-recovered"] && argc == 5) {
+                operation = ReadRecovered(session.afc, [NSString stringWithUTF8String:argv[3]],
+                    [NSString stringWithUTF8String:argv[4]]);
+            } else if ([command isEqual:@"snapshot-card"] && argc == 5) {
+                operation = SnapshotCard(session.afc,
+                    [NSString stringWithUTF8String:argv[3]],
+                    [NSString stringWithUTF8String:argv[4]]);
+            } else if ([command isEqual:@"remove-card-artwork"] && argc == 5) {
+                operation = RemoveCardArtwork(session.afc,
+                    [NSString stringWithUTF8String:argv[3]],
+                    [NSString stringWithUTF8String:argv[4]]);
             } else if ([command isEqual:@"snapshot-books"] && argc == 4) {
                 operation = SnapshotBooksState(
                     session.afc, [NSString stringWithUTF8String:argv[3]]);

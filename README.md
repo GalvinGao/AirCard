@@ -141,3 +141,46 @@ This builds universal binaries (`arm64` + `x86_64`), bundles dependencies into `
 
 ## Credits
 - Core exploit based on `airlift` (AirTraffic sync escape).
+
+## Artwork backups and restore
+
+Flash Skins now requires a verified backup before writing any artwork. The same
+requirement applies to both command-line entry points. Backups preserve the exact
+bytes of `cardBackgroundCombined@3x.png`, `cardBackgroundCombined@2x.png`, and
+`cardBackgroundCombined.pdf`, including a record of which files were absent.
+They do not copy the whole pass directory or the disposable Wallet caches.
+
+Use **Backups → Back Up Selected Cards** to back up without flashing, **Show
+Backups** to browse snapshots, or **Restore Artwork…** to select a `manifest.json`.
+Backups are stored in `~/Library/Application Support/AirCard/Backups`, grouped by
+hashed device/card identifiers and timestamp. Every successful snapshot has a
+manifest containing the device, card, file sizes, and SHA-256 checksums. Later
+backups do not replace earlier snapshots. A backup captures the current artwork;
+it cannot recover an issuer image that was overwritten before the first backup.
+
+Restore validates the device and checksums, backs up the current artwork first,
+restores saved files, removes newly introduced artwork absent from the selected
+snapshot, verifies readback, and invalidates Wallet caches. If a write fails, the
+snapshot is retained and the operation reports failure; restoring several files
+is not an atomic transaction.
+
+The reader attempts access through a temporary Airlift directory link. If iOS
+blocks directory access, backup and flashing stop without moving artwork.
+The experimental move-based fallback is disabled: testing on iOS 26.7 saved
+one original locally but could not verify its return to the phone. Backups and
+restore are therefore not yet supported on that tested device.
+
+Every overwritten file must have a verified backup or have been positively
+confirmed absent by a complete directory listing. Older experimental snapshots
+may contain unknown entries; those entries are left untouched during restore.
+
+Books sync state is preserved. Pending backup sessions remain on disk if cleanup
+fails and must recover successfully before the next artwork operation. Artwork
+operations are serialized per device. Keep the same Mac's backup directory when
+recovering an interrupted session.
+
+```sh
+python3 aircard_backend.py --backup-artwork DEVICE_ID CARD_HASH
+python3 aircard_backend.py --restore-artwork DEVICE_ID /path/to/manifest.json
+python3 -m unittest discover -s tests -p 'test_card*.py' -v
+```

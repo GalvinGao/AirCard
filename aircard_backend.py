@@ -45,6 +45,8 @@ from apply_card_skin import (
     ROOT,
     DEVICE_HELPER,
 )
+from card_backup import backup_card, device_lock, restore_card, load_backup
+
 from aircard import (
     get_connected_device,
     load_saved_cards,
@@ -119,6 +121,40 @@ def cmd_prepare_image(src: str, dst: str):
 
 
 def cmd_flash(udid: str, card_hash: str, image_path: str):
+    try:
+        with device_lock(udid):
+            return _cmd_flash(udid, card_hash, image_path)
+    except Exception as exc:
+        print(json.dumps({"type": "error", "message": str(exc)}), flush=True)
+        return False
+
+
+def cmd_backup(udid: str, cards: list[str]):
+    try:
+        with device_lock(udid):
+            for card in cards:
+                manifest = backup_card(udid, card)
+                print(json.dumps({"type": "backup", "message": f"Verified backup: {manifest}",
+                                  "path": str(manifest)}), flush=True)
+        return True
+    except Exception as exc:
+        print(json.dumps({"type": "error", "message": str(exc)}), flush=True)
+        return False
+
+
+def cmd_restore(udid: str, manifest_path: str):
+    try:
+        with device_lock(udid):
+            rollback = restore_card(udid, manifest_path)
+        print(json.dumps({"type": "success", "message": "Original artwork restored and verified. Reopen Wallet.",
+                          "backup": str(rollback)}), flush=True)
+        return True
+    except Exception as exc:
+        print(json.dumps({"type": "error", "message": str(exc)}), flush=True)
+        return False
+
+
+def _cmd_flash(udid: str, card_hash: str, image_path: str):
     img_path = Path(image_path)
     if not img_path.is_file():
         print(json.dumps({"type": "error", "message": "Image file not found"}))
@@ -129,13 +165,22 @@ def cmd_flash(udid: str, card_hash: str, image_path: str):
     except Exception as exc:
         print(json.dumps({"type": "error", "message": f"Could not prepare artwork: {exc}"}), flush=True)
         return False
+    print(json.dumps({"type": "progress", "message": "Backing up original artwork before writing..."}), flush=True)
+    manifest = backup_card(udid, card_hash)
+    print(json.dumps({"type": "backup", "message": f"Verified artwork backup: {manifest}",
+                      "path": str(manifest)}), flush=True)
+    saved, _ = load_backup(udid, manifest)
+    writable_assets = [name for name in TARGET_ASSETS if saved['files'][name]['present'] is not None]
+    skipped = [name for name in TARGET_ASSETS if name not in writable_assets]
+    if skipped:
+        print(json.dumps({"type": "warning", "message": "Leaving unverified artwork untouched: " + ", ".join(skipped)}), flush=True)
     failed = []
     pkpass_dir = f"/var/mobile/Library/Passes/Cards/{card_hash}.pkpass"
     
-    total_steps = len(TARGET_ASSETS) + (len(CACHE_FILES) * 2) + 1
+    total_steps = len(writable_assets) + (len(CACHE_FILES) * 2) + 1
     step = 0
 
-    for asset in TARGET_ASSETS:
+    for asset in writable_assets:
         step += 1
         print(json.dumps({
             "type": "progress",
@@ -373,6 +418,10 @@ def main():
         cmd_prepare_image(sys.argv[2], sys.argv[3])
     elif norm_cmd == "flash" and len(sys.argv) > 4:
         sys.exit(0 if cmd_flash(sys.argv[2], sys.argv[3], sys.argv[4]) else 1)
+    elif norm_cmd == "backup-artwork" and len(sys.argv) > 3:
+        sys.exit(0 if cmd_backup(sys.argv[2], sys.argv[3:]) else 1)
+    elif norm_cmd == "restore-artwork" and len(sys.argv) > 3:
+        sys.exit(0 if cmd_restore(sys.argv[2], sys.argv[3]) else 1)
     elif norm_cmd == "inspect-passthm" and len(sys.argv) > 2:
         cmd_inspect_passthm(sys.argv[2])
     elif norm_cmd == "flash-passthm" and len(sys.argv) > 3:

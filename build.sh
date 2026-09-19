@@ -79,6 +79,7 @@ fi
 cp apply_card_skin.py "$RESOURCES_DIR/"
 cp aircard.py "$RESOURCES_DIR/"
 cp aircard_backend.py "$RESOURCES_DIR/"
+cp card_backup.py "$RESOURCES_DIR/"
 
 echo "==> [4/6] Compiling universal Swift binary (arm64 + x86_64)..."
 swiftc -O -parse-as-library -target arm64-apple-macosx14.0 AirCardApp.swift -o build/AirCard_arm64

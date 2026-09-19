@@ -6,6 +6,8 @@ Use the requested file/page and inspect it before writing. Discover current node
 
 Use the available Figma plugin for precise edits. Load the applicable Figma skill and current tool documentation before invoking its API. Keep requests small, await asynchronous operations, return affected IDs and keep workflow metadata outside the design file. Verify available font styles before changing text.
 
+If the plugin is unavailable because of quota or a missing capability, native Figma import and editing through supported computer-use tools can finish the authorized work. Inspect current UI state and use observed controls. This is not a way around a permission or safety denial. A typed coordinate or file path is not committed until the editor accepts it; verify the field or resulting geometry after confirming the edit.
+
 For a fresh collection, preserve the previous board when useful and create the revised collection in clear space. For a small correction, modify the existing nodes in place. Do not duplicate an entire collection to delete one caption.
 
 ## Import and structure
@@ -15,6 +17,8 @@ Keep the card as layered artwork: base material, source illustration/mask, ident
 Use native vector import for SVG assets. Follow the upload tool's current limits and returned instructions; record which local asset maps to each returned node. Upload all issued single-use URLs before requesting a new batch when the tool requires it. Never store expiring upload URLs in the delivery archive.
 
 An upload may land on the first page rather than the requested page. Inspect the returned node's parent and explicitly move it to the intended page. Native card dimensions and aspect ratio should match the source after import.
+
+Use self-contained SVGs with explicit image transforms and unique IDs across combined assets. Verify editable identity paths survived import rather than assuming an SVG remained vector throughout. Import, export and placement dialogs can finish asynchronously: inspect fresh state before repeating an action that could create duplicate boards.
 
 Use auto layout for a comparison board's rows, labels, captions and cards. Use intentional absolute positioning inside the card artwork. Preserve visual layer names and leave sufficient space between options for a fair comparison.
 
@@ -27,11 +31,15 @@ Use auto layout for a comparison board's rows, labels, captions and cards. Use i
 5. Compare against the local renderer. Small antialiasing differences are normal; a low average pixel difference does not excuse a missing small logo or line.
 6. Fix the affected nodes and the reproducible source, then refresh only the relevant verification.
 
+When saving a named version, verify the actual entry in version history. Clicking Save or observing an unchanged canvas does not prove the version was stored. Record the saved page, board, card nodes and verification artifact in the project, not as hardcoded IDs in the reusable skill.
+
 If Figma access is unavailable, finish the local editable artifacts and report exactly which step remains unavailable. Do not claim a file was edited based solely on an exported SVG or a successful upload response. Do not work around an explicit permission or safety denial using another route.
 
 ## Package the collection
 
-Typical deliverables are high-resolution PNGs, opaque full-bleed variants when useful, editable SVG/Figma sources, a small comparison sheet, and concise source credits. Keep phone chrome and presentation shadows out of the application images.
+Typical deliverables are high-resolution application PNGs, editable SVG/Figma sources, a small comparison sheet, and concise source credits. For AirCard, default to opaque square-corner images and keep any rounded preview separate. Keep phone chrome, presentation shadows, speculative payment-network marks and card credentials out of the application images.
+
+Reopen the final archive, enumerate the actual card files, and decode each PNG. Check the requested count, dimensions, PNG format, full alpha range and all four outer corner pixels. Verify artwork fills the corners visually; opaque matte corners can still hide a baked-in rounded card. Compare packaged file hashes with the final loose exports so a stale ZIP cannot pass because the current source folder is correct. Avoid duplicate old revisions in the current package.
 
 Avoid shipping raw font downloads, temporary upload URLs, browser state or unrelated research files. Include enough provenance to locate the source assets again. A technical review report should say what it checked and leave aesthetic judgement to the actual visual inspection.
 

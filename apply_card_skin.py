@@ -204,21 +204,14 @@ def main():
     print(f"Loaded image from batter: {len(img_data)} bytes")
     print(f"Targeting {len(hashes)} cards on device {udid}...")
 
-    for index, h in enumerate(hashes, 1):
-        target_dir = f"/var/mobile/Library/Passes/Cards/{h}.pkpass"
-        print(f"\n[{index}/{len(hashes)}] Processing card: {h}")
-
-        print("  -> Writing cardBackgroundCombined@3x.png...")
-        ok3x = write_file(udid, target_dir, "cardBackgroundCombined@3x.png", img_data)
-        print(f"     Result: {'SUCCESS' if ok3x else 'FAILED'}")
-
-        print("  -> Writing cardBackgroundCombined@2x.png...")
-        ok2x = write_file(udid, target_dir, "cardBackgroundCombined@2x.png", img_data)
-        print(f"     Result: {'SUCCESS' if ok2x else 'FAILED'}")
-
-        print("  -> Invalidating pass cache...")
-        ok_cache = invalidate_cache(udid, h)
-        print(f"     Result: {'SUCCESS' if ok_cache else 'FAILED (or cache already empty)'}")
+    # The legacy entry point uses the same mandatory backup gate as the GUI.
+    from aircard_backend import cmd_flash
+    with tempfile.TemporaryDirectory(prefix="aircard-legacy-") as directory:
+        image = Path(directory) / "artwork.png"
+        image.write_bytes(img_data)
+        for h in hashes:
+            if not cmd_flash(udid, h, str(image)):
+                sys.exit(1)
 
     print("\nAll done! Please force close Wallet on your iPhone and reopen it.")
 

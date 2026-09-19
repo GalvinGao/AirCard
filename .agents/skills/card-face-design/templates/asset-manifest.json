@@ -6,13 +6,19 @@
       "source_page": "REPLACE_WITH_PRIMARY_SOURCE_PAGE",
       "asset_url": "REPLACE_WITH_ORIGINAL_ASSET_URL",
       "creator_or_publisher": "REPLACE_WITH_CREDIT",
+      "credit_verified_at": "REPLACE_WITH_PRIMARY_CREDIT_PAGE",
+      "depicted_character": null,
+      "sha256": "REPLACE_WITH_ORIGINAL_FILE_SHA256",
       "format": "SVG",
       "dimensions_or_viewbox": null,
       "alpha": true,
       "colour_profile": "VERIFY_DIGITAL_RGB",
+      "working_colour_space": "sRGB",
+      "visible_ink_bounds": null,
+      "pre_existing_source_crops": [],
       "role": "Primary issuer identity",
       "modifications": [],
-      "notes": "Verify the appropriate optical size and preserve native lettering."
+      "notes": "Inspect the actual file. Verify optical size, visible ink and issuer clear space; preserve native lettering. For illustration assets, verify character, artist and source-edge completeness."
     }
   ]
 }

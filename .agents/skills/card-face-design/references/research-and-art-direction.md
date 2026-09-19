@@ -10,6 +10,8 @@ For an issuer, seek the official card page, public digital identity assets, rele
 
 For an illustration project, read the artist credit and concept. Inspect the full main visual, alternate visual, costume/prop sheets, original transparent layers, and relevant official merchandise. Compare source files at natural resolution. A tiny preview with a long pixel dimension created by upscaling is still a tiny source.
 
+Verify the depicted character and the illustrator from the original publication, not style resemblance, a filename or a search thumbnail. An artist's feed may contain several characters. Separate illustration credit from costume/concept credit when the publisher does. Official assets and fan art can both suit the brief; preserve the user's actual artist preferences and exclusions without treating them as universal design rules.
+
 Create a source contact sheet. Note what each candidate contributes and why unsuitable alternatives were rejected: crowded composition, clipped silhouette, weak expression at phone size, insufficient resolution, or incompatible lighting. Do not turn exploration into an arbitrary asset quota.
 
 Before composition, be able to explain:
@@ -23,7 +25,9 @@ Keep that explanation compact and connect each observation to a design choice.
 
 ## Asset provenance
 
-For every used asset, record the source page and direct asset URL separately, artist/publisher, file dimensions, alpha, format/profile, intended role and actual modification. Label new geometry as an interpretation; do not call redrawn orbital lines an extracted official asset.
+For every used asset, record the source page and direct asset URL separately, artist/publisher, depicted character, file dimensions, alpha, format/profile, SHA-256, intended role and actual modification. Record the page that verifies the credit and any pre-existing source crop. A hash identifies the downloaded bytes; it does not establish authorship. Label new geometry as an interpretation; do not call redrawn orbital lines an extracted official asset.
+
+Retain the original file before profile conversion, matting or cropping. Inspect the downloaded file itself and, when there is ambiguity, compare it with the publisher's asset; do not assign a convenient local filename to unrelated artwork. Preserve existing artist signatures and record illustration credits with the delivered collection.
 
 Use the requested browser/computer workflow when appropriate for acquiring assets. Prefer original downloads to screenshots. If an access or safety control blocks a resource, do not bypass it through a different client, a hidden endpoint, or another domain. Continue with accessible official alternatives and disclose the limitation only if it affects the result.
 
@@ -49,3 +53,4 @@ These are useful precedents from the originating project, not permanent asset re
 - [Miku's official 16th-birthday site](https://piapro.net/miku16thbd/): main/concept visuals, artist explanation, and wing/costume sheets provided meaningful motifs and scene context.
 - [Official Miku Symphony site](https://sp.wmg.jp/mikusymphony/): source for orchestral illustration and lighting references; do not relabel it as a different campaign.
 - [Magical Mirai 2024 gallery](https://magicalmirai.com/2024/special_gallery.html): multiple artists and a travel concept supported a distinct alternative to the anniversary artwork.
+- [Revolut's official logo package](https://developer.revolut.com/assets/oba/Main%28Retail%29-Logo-package.zip) and [public identity guide](https://developer.revolut.com/assets/oba/Revolut-Open-Banking-guidelines.pdf): original digital wordmarks and issuer-specific clear-space guidance. Check scope and current guidance before reuse; an API integration guide is not a complete card-design specification.

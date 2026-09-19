@@ -5,6 +5,7 @@ from pathlib import Path
 import sys
 import tempfile
 import unittest
+from contextlib import nullcontext
 from unittest.mock import patch
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
@@ -20,7 +21,10 @@ class CardArtworkTests(unittest.TestCase):
             assets = {name: b'%PDF-test' if name.endswith('.pdf') else b'png'
                       for name in aircard.TARGET_ASSETS}
             output = io.StringIO()
-            with patch.object(backend, 'prepare_card_assets', return_value=assets), \
+            with patch.object(backend, 'device_lock', return_value=nullcontext()), \
+                 patch.object(backend, 'backup_card', return_value=Path('/backup/manifest.json')), \
+                 patch.object(backend, 'load_backup', return_value=({'files': {n: {'present': True} for n in assets}}, {})), \
+                 patch.object(backend, 'prepare_card_assets', return_value=assets), \
                  patch.object(backend, 'write_file', side_effect=lambda u, d, n, p: n != failure) as write, \
                  contextlib.redirect_stdout(output):
                 result = backend.cmd_flash('device', 'card', str(image))
@@ -50,7 +54,8 @@ class CardArtworkTests(unittest.TestCase):
 
     def test_conversion_failure_never_writes_to_device(self):
         with tempfile.NamedTemporaryFile() as image:
-            with patch.object(backend, 'prepare_card_assets', side_effect=ValueError('invalid')), \
+            with patch.object(backend, 'device_lock', return_value=nullcontext()), \
+                 patch.object(backend, 'prepare_card_assets', side_effect=ValueError('invalid')), \
                  patch.object(backend, 'write_file') as write, \
                  contextlib.redirect_stdout(io.StringIO()):
                 self.assertFalse(backend.cmd_flash('device', 'card', image.name))

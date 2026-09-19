@@ -788,6 +788,71 @@ class AppViewModel: ObservableObject {
     
     // MARK: - Skin Application
     
+    func restoreArtwork() {
+        guard let udid = device?.udid, !isFlashing else { return }
+        let panel = NSOpenPanel()
+        panel.title = "Choose an artwork backup manifest"
+        panel.allowedContentTypes = [.json]
+        panel.directoryURL = FileManager.default.homeDirectoryForCurrentUser
+            .appendingPathComponent("Library/Application Support/AirCard/Backups")
+        guard panel.runModal() == .OK, let url = panel.url else { return }
+        runArtworkBackupCommand(["--restore-artwork", udid, url.path], restoring: true)
+    }
+
+    func backUpSelectedArtwork() {
+        guard let udid = device?.udid, !isFlashing else { return }
+        let selected = cards.filter { $0.isSelected }.map { $0.id }
+        guard !selected.isEmpty else { return }
+        runArtworkBackupCommand(["--backup-artwork", udid] + selected, restoring: false)
+    }
+
+    private func runArtworkBackupCommand(_ arguments: [String], restoring: Bool) {
+        isFlashing = true
+        showSuccessAlert = false
+        showLogs = true
+        statusText = restoring ? "Restoring artwork from backup..." : "Backing up selected artwork..."
+        let directory = scriptDir
+        Task.detached {
+            let process = Process()
+            process.executableURL = AppViewModel.pythonExecutableURL
+            process.environment = AppViewModel.processEnvironment
+            process.currentDirectoryURL = URL(fileURLWithPath: directory)
+            process.arguments = ["aircard_backend.py"] + arguments
+            let pipe = Pipe()
+            process.standardOutput = pipe
+            process.standardError = pipe
+            do {
+                try process.run()
+                let data = pipe.fileHandleForReading.readDataToEndOfFile()
+                process.waitUntilExit()
+                let output = String(data: data, encoding: .utf8) ?? ""
+                await MainActor.run {
+                    for line in output.components(separatedBy: .newlines) where !line.isEmpty {
+                        if let bytes = line.data(using: .utf8),
+                           let event = try? JSONSerialization.jsonObject(with: bytes) as? [String: Any],
+                           let message = event["message"] as? String {
+                            self.log(message)
+                        } else {
+                            self.log(line)
+                        }
+                    }
+                    self.isFlashing = false
+                    self.statusText = process.terminationStatus == 0
+                        ? (restoring ? "Artwork restored and verified. Reopen Wallet." : "Artwork backups saved and verified.")
+                        : "Artwork operation failed. See logs; existing backups are retained."
+                    if process.terminationStatus != 0 { self.errorMessage = self.statusText }
+                }
+            } catch {
+                await MainActor.run {
+                    self.isFlashing = false
+                    self.statusText = "Could not start artwork operation: \(error.localizedDescription)"
+                    self.errorMessage = self.statusText
+                    self.log(self.statusText)
+                }
+            }
+        }
+    }
+
     func applySkin() {
         guard let udid = device?.udid else {
             errorMessage = "No iPhone connected."
@@ -806,6 +871,7 @@ class AppViewModel: ObservableObject {
         let scriptDir = self.scriptDir
         
         Task.detached {
+            var hadSkippedArtwork = false
             let totalCards = Double(selectedCardsWithSkin.count)
             for (idx, card) in selectedCardsWithSkin.enumerated() {
                 guard let imgURL = card.customImageURL else { continue }
@@ -853,6 +919,7 @@ class AppViewModel: ObservableObject {
                           let json = try? JSONSerialization.jsonObject(with: lineData) as? [String: Any],
                           let msg = json["message"] as? String else { return }
                     
+                    if json["type"] as? String == "warning" { hadSkippedArtwork = true }
                     let step = (json["step"] as? NSNumber)?.doubleValue
                     let total = (json["total"] as? NSNumber)?.doubleValue
                     
@@ -914,9 +981,11 @@ class AppViewModel: ObservableObject {
             
             await MainActor.run {
                 self.isFlashing = false
-                self.statusText = "Complete! All cards updated."
-                self.showSuccessAlert = true
-                self.log("Skins successfully applied to all selected cards!")
+                self.statusText = hadSkippedArtwork
+                    ? "Completed with unverified artwork skipped. See logs."
+                    : "Complete! All cards updated."
+                self.showSuccessAlert = !hadSkippedArtwork
+                self.log(self.statusText)
             }
         }
     }
@@ -1662,6 +1731,20 @@ struct ContentView: View {
             .controlSize(.regular)
             .disabled(vm.device?.connected != true)
             
+            Menu("Backups") {
+                Button("Back Up Selected Cards", action: vm.backUpSelectedArtwork)
+                    .disabled(vm.device?.connected != true || vm.isFlashing || vm.isScanningCards || !vm.cards.contains { $0.isSelected })
+                Button("Restore Artwork…", action: vm.restoreArtwork)
+                    .disabled(vm.device?.connected != true || vm.isFlashing || vm.isScanningCards)
+                Button("Show Backups") {
+                    let folder = FileManager.default.homeDirectoryForCurrentUser
+                        .appendingPathComponent("Library/Application Support/AirCard/Backups")
+                    try? FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+                    NSWorkspace.shared.open(folder)
+                }
+            }
+            .fixedSize()
+
             Button(action: { vm.showAddCardSheet = true }) {
                 Label("Add Manually", systemImage: "plus")
             }

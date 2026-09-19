@@ -10,7 +10,9 @@
 - Canvas, silhouette and safe area:
 - Border/strip coordinates:
 - Original identity assets and supporting type:
+- Visible ink alignment and issuer-specific clear space:
 - Intended display size:
+- Application export versus presentation preview:
 
 ## Selection notes
 - Strongest phone-size result and why:

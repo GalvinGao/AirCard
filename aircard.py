@@ -378,29 +378,14 @@ def main():
     # 5. Flash cards
     print(f"\n[5/5] Flashing skin to selected cards ({len(selected_hashes)})...")
 
-    failed = []
-    for idx, h in enumerate(selected_hashes, 1):
-        print(f"\n--- [{idx}/{len(selected_hashes)}] Card: {h} ---")
-        pkpass_dir = f"/var/mobile/Library/Passes/Cards/{h}.pkpass"
+    from aircard_backend import cmd_flash
+    with tempfile.TemporaryDirectory(prefix="aircard-flash-") as directory:
+        image = Path(directory) / "prepared.png"
+        image.write_bytes(png_bytes)
+        for h in selected_hashes:
+            if not cmd_flash(device["udid"], h, str(image)):
+                sys.exit(1)
 
-        for asset in TARGET_ASSETS:
-            ok = write_file(device["udid"], pkpass_dir, asset, assets[asset])
-            if not ok:
-                failed.append(f"{h}/{asset}")
-            status = "OK" if ok else "FAIL"
-            print(f"  -> {asset}: {status}")
-
-        for ext in [".cache", ".pkcache"]:
-            cache_dir = f"/var/mobile/Library/Passes/Cards/{h}{ext}"
-            for leaf in CACHE_FILES:
-                if not write_file(device["udid"], cache_dir, leaf, b"corrupted"):
-                    failed.append(f"{h}{ext}/{leaf}")
-        print("  -> System cache cleared (.cache & .pkcache)")
-
-    print("\n" + "=" * 60)
-    if failed:
-        print("❌ Some writes failed: " + ", ".join(failed))
-        sys.exit(1)
     print("🎉 DONE! All selected cards successfully updated!")
     print("=" * 60)
     print("1. Force close Apple Wallet on your iPhone.")
